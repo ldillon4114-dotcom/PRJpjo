@@ -316,10 +316,10 @@ var trail=new T.Mesh(trailGeo,new T.MeshBasicMaterial({color:0xbfe9ff,transparen
 trail.rotation.x=-Math.PI/2;trail.position.y=1;percy.g.add(trail);
 var trailT=0;
 /* camera */
-var CAM={yaw:2.6,pitch:.55,dist:7.4,shake:0,slow:0};
+var CAM={yaw:2.6,pitch:.34,dist:5.2,shake:0,slow:0};
 function updCam(dt){
  var focus=new T.Vector3(P.x,1.35+(P.mode==='swim'?0:0),P.z);
- var cy=CAM.yaw,cp=clamp(CAM.pitch,.12,1.15);
+ var cy=CAM.yaw,cp=clamp(CAM.pitch,.08,1.0);
  var off=new T.Vector3(Math.sin(cy)*Math.cos(cp),Math.sin(cp),Math.cos(cy)*Math.cos(cp)).multiplyScalar(CAM.dist);
  var pos=focus.clone().add(off);
  pos.y=Math.max(pos.y,WORLD.waterY+.3);
@@ -482,7 +482,7 @@ function updE3(e,dt){
 
 /* combat */
 function faceLock(){var best=null,bd=7;
- for(var i=0;i<EN3.length;i++){var e=EN3[i];if(e.dead)continue;var d=dist(e.x,e.z,P.x,P.z);if(d<bd){var an=Math.atan2(e.z-P.z,e.x-P.x);var da=Math.abs(((an-P.yaw+Math.PI*3)%(Math.PI*2))-Math.PI);if(da<1.2){best=e;bd=d}}}
+ for(var i=0;i<EN3.length;i++){var e=EN3[i];if(e.dead)continue;var d=dist(e.x,e.z,P.x,P.z);if(d<bd){var an=Math.atan2(e.z-P.z,e.x-P.x);var fa=Math.PI/2-P.yaw;var da=Math.abs(((an-fa+Math.PI*3)%(Math.PI*2))-Math.PI);if(da<1.2){best=e;bd=d}}}
  return best}
 function doLight(){
  if(P.dead||G3.paused)return;
@@ -506,7 +506,7 @@ function atkAnim(dt){
  if(!P.atkHit&&f>.3){P.atkHit=true;var dmg=S3.dmg*(c===2?1.5:1)*.9;
   var hitAny=false;
   for(var i=0;i<EN3.length;i++){var e=EN3[i];if(e.dead)continue;
-   var dd=dist(e.x,e.z,P.x,P.z);if(dd<2.9){var an=Math.atan2(e.z-P.z,e.x-P.x);var da=Math.abs(((an-P.yaw+Math.PI*3)%(Math.PI*2))-Math.PI);
+   var dd=dist(e.x,e.z,P.x,P.z);if(dd<2.9){var an=Math.atan2(e.z-P.z,e.x-P.x);var fa=Math.PI/2-P.yaw;var da=Math.abs(((an-fa+Math.PI*3)%(Math.PI*2))-Math.PI);
     if(da<1.15){hitE3(e,dmg,an);hitAny=true}}}
   if(hitAny){CAM.shake=.5;sfx('hit')}}
  if(f>=1){P.atkT=-1;P.atkHit=false;
@@ -561,7 +561,7 @@ function hurtP3(n,an){
 function spend(n){if(S3.en<n)return false;S3.en-=n;return true}
 function doBlast(){
  if(PCD.pB>0||!spend(14))return;PCD.pB=PCDMAX.pB;
- var an=P.yaw;sfx('jet');
+ var an=Math.PI/2-P.yaw;sfx('jet');
  var b=new T.Mesh(new T.SphereGeometry(.4,10,8),matWater);
  b.position.set(P.x+Math.cos(an)*.8,1.2,P.z+Math.sin(an)*.8);
  scene.add(b);FX.meshes.push({m:b,t:0,life:1.4,grow:0,vel:26,kind:'blast',dmg:S3.dmg*1.5,an:an});
@@ -571,7 +571,7 @@ function doWhip(){
  trailT=.25;trail.material.color.setHex(0x7fd8ff);setTimeout(function(){trail.material.color.setHex(0xbfe9ff)},260);
  for(var i=0;i<EN3.length;i++){var e=EN3[i];if(e.dead)continue;
   var dd=dist(e.x,e.z,P.x,P.z);if(dd<3.8){var an=Math.atan2(e.z-P.z,e.x-P.x);
-   var da=Math.abs(((an-P.yaw+Math.PI*3)%(Math.PI*2))-Math.PI);
+   var fa=Math.PI/2-P.yaw;var da=Math.abs(((an-fa+Math.PI*3)%(Math.PI*2))-Math.PI);
    if(da<1.35){hitE3(e,S3.dmg*1.2,an);e.vx+=Math.cos(an)*6;e.vz+=Math.sin(an)*6}}}}
 function doTidal(){
  if(PCD.pT>0||!spend(38))return;PCD.pT=PCDMAX.pT;
@@ -681,11 +681,14 @@ function updMove(dt){
  P.swim=!!w;
  /* face + move dir camera relative */
  var mvx=0,mvz=0;
- if(mag>.05){var ang=Math.atan2(iv.x,-iv.y)+CAM.yaw;
+ if(mag>.05){var cy0=Math.cos(CAM.yaw),sy0=Math.sin(CAM.yaw);
+  var dxx=iv.x*cy0+iv.y*sy0,dzz=iv.y*cy0-iv.x*sy0;
+  var dl0=Math.sqrt(dxx*dxx+dzz*dzz)||1;dxx/=dl0;dzz/=dl0;
+  var ang=Math.atan2(dxx,dzz);
   var spd;
   if(swim){spd=P.dive?4.5:3.4;if(P.dashT>0)spd=17;if(P.surfT>0)spd=9}
   else{spd=mag>.92?7.2:mag>.55?5.6:4.4;if(P.dashT>0)spd=18;if(P.roll>0)spd=8.5}
-  mvx=Math.sin(ang)*spd*mag;mvz=-Math.cos(ang)*spd*mag;
+  mvx=dxx*spd*mag;mvz=dzz*spd*mag;
   var targ=ang;var d=((targ-P.yaw+Math.PI*3)%(Math.PI*2))-Math.PI;
   if(P.roll<=0)P.yaw+=d*Math.min(1,dt*12);
   P.vx+=(mvx-P.vx)*Math.min(1,dt*10);P.vz+=(mvz-P.vz)*Math.min(1,dt*10)}
