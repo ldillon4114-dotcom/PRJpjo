@@ -160,10 +160,10 @@ for(var k=0;k<bCount;k++){var b=BLD[k];dum.position.set(b.x,0,b.z);dum.scale.set
 bMesh.castShadow=true;bMesh.receiveShadow=true;scene.add(bMesh);
 
 /* ocean + river + waterfall */
-var ocnGeo=new T.PlaneGeometry(2400,2400,70,70);
+var ocnGeo=new T.PlaneGeometry(2400,2400,48,48);
 var ocn=new T.Mesh(ocnGeo,new T.MeshStandardMaterial({color:0x1a6fa8,transparent:true,opacity:.86,roughness:.25,metalness:.35}));
 ocn.rotation.x=-Math.PI/2;ocn.position.y=WORLD.waterY;ocn.receiveShadow=true;scene.add(ocn);
-function animOcean(t){var p=ocnGeo.attributes.position;for(var i=0;i<p.count;i++){var x=p.getX(i),y=p.getY(i);p.setZ(i,Math.sin(x*.045+t*1.3)*.5+Math.cos(y*.05+t*1.7)*.4);}p.needsUpdate=true;ocnGeo.computeVertexNormals();}
+var ocF=0;function animOcean(t){ocF++;var p=ocnGeo.attributes.position;for(var i=0;i<p.count;i++){var x=p.getX(i),y=p.getY(i);p.setZ(i,Math.sin(x*.045+t*1.3)*.5+Math.cos(y*.05+t*1.7)*.4);}p.needsUpdate=true;if(ocF%3===0)ocnGeo.computeVertexNormals();}
 var rivPath=[{x:-40,z:-330},{x:-20,z:-220},{x:60,z:-120},{x:80,z:-10},{x:60,z:120},{x:140,z:220},{x:200,z:340}];
 var rivPts=[];
 for(var i=0;i<rivPath.length-1;i++){for(var s=0;s<10;s++){var a=rivPath[i],b=rivPath[i+1];var f=s/10;rivPts.push({x:a.x+(b.x-a.x)*f,z:a.z+(b.z-a.z)*f})}}
@@ -316,7 +316,7 @@ var trail=new T.Mesh(trailGeo,new T.MeshBasicMaterial({color:0xbfe9ff,transparen
 trail.rotation.x=-Math.PI/2;trail.position.y=1;percy.g.add(trail);
 var trailT=0;
 /* camera */
-var CAM={yaw:2.6,pitch:.42,dist:6.4,shake:0,slow:0};
+var CAM={yaw:2.6,pitch:.55,dist:7.4,shake:0,slow:0};
 function updCam(dt){
  var focus=new T.Vector3(P.x,1.35+(P.mode==='swim'?0:0),P.z);
  var cy=CAM.yaw,cp=clamp(CAM.pitch,.12,1.15);
