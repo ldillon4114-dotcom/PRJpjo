@@ -111,7 +111,7 @@ var skyDome=new T.Mesh(new T.SphereGeometry(900,20,14),new T.ShaderMaterial({sid
 scene.add(skyDome);
 var glowT=ctex(function(x,w,h){var g=x.createRadialGradient(w/2,h/2,0,w/2,h/2,w/2);g.addColorStop(0,'rgba(255,244,214,.9)');g.addColorStop(.35,'rgba(255,230,170,.35)');g.addColorStop(1,'rgba(255,230,170,0)');x.fillStyle=g;x.fillRect(0,0,w,h)},128,128);
 var sunGlow=new T.Sprite(new T.SpriteMaterial({map:glowT,blending:T.AdditiveBlending,depthWrite:false,transparent:true}));
-sunGlow.scale.set(150,150,1);sun.add(sunGlow);
+sunGlow.scale.set(150,150,1);
 function resize(){var w=innerWidth,h=innerHeight;renderer.setSize(w,h,false);cam.aspect=w/h;cam.updateProjectionMatrix();}
 addEventListener('resize',function(){resize();document.getElementById('rot').style.display=(innerHeight>innerWidth)?'flex':'none';});
 resize();
@@ -119,6 +119,7 @@ var hemi=new T.HemisphereLight(0xcfe3ff,0x3d4f33,.7);scene.add(hemi);
 var sun=new T.DirectionalLight(0xffe9c4,1.5);sun.position.set(60,90,40);sun.castShadow=true;
 sun.shadow.mapSize.set(2048,2048);sun.shadow.camera.left=-70;sun.shadow.camera.right=70;sun.shadow.camera.top=70;sun.shadow.camera.bottom=-70;sun.shadow.camera.far=300;sun.shadow.bias=-.0004;
 var fill=new T.DirectionalLight(0x8fb4ff,.32);fill.position.set(-50,45,-35);scene.add(fill);
+sun.add(sunGlow);
 scene.add(sun);scene.add(sun.target);
 /* textures */
 function ctex(fn,w,h){var c=document.createElement('canvas');c.width=w||128;c.height=h||128;var x=c.getContext('2d');fn(x,c.width,c.height);var t=new T.CanvasTexture(c);t.wrapS=t.wrapT=T.RepeatWrapping;return t}
