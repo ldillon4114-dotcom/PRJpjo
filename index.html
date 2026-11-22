@@ -13,19 +13,19 @@ html,body{height:100%;overflow:hidden;background:#060a14;font-family:'Avenir Nex
 #c{position:fixed;inset:0;display:block}
 .hud{position:fixed;pointer-events:none;z-index:6}
 #topleft{top:calc(env(safe-area-inset-top,0px) + 10px);left:calc(env(safe-area-inset-left,0px) + 12px)}
-.bar{width:min(38vw,230px);height:14px;background:#0a1220cc;border:1px solid #33507e;border-radius:9px;overflow:hidden;position:relative;margin-bottom:5px}
+.bar{width:min(38vw,230px);height:14px;background:#0a1220b3;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);box-shadow:0 2px 12px #0007;border:1px solid #33507e;border-radius:9px;overflow:hidden;position:relative;margin-bottom:5px}
 .bar i{position:absolute;inset:0;transform-origin:left;transition:transform .15s;border-radius:9px}
 #hp i{background:linear-gradient(90deg,#e8484f,#ff9d7a)}
 #en i{background:linear-gradient(90deg,#1f7fd0,#5fd0ff)}
 .bar b{position:absolute;inset:0;font-size:9px;line-height:13px;text-align:center;font-weight:700;letter-spacing:.5px;text-shadow:0 1px 2px #000}
 #meta{font-size:11px;color:var(--gold);font-weight:700;letter-spacing:1px;text-shadow:0 1px 3px #000}
 #topright{top:calc(env(safe-area-inset-top,0px) + 10px);right:calc(env(safe-area-inset-right,0px) + 12px);text-align:right}
-#obj{display:inline-block;background:#0a1220cc;border:1px solid #33507e;border-radius:10px;padding:6px 10px;font-size:10.5px;line-height:1.4;max-width:44vw}
+#obj{display:inline-block;background:#0a1220b3;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);box-shadow:0 2px 12px #0007;border:1px solid #33507e;border-radius:10px;padding:6px 10px;font-size:10.5px;line-height:1.4;max-width:44vw}
 #obj b{color:var(--gold);display:block;font-size:10.5px;letter-spacing:.5px}
 #pinp{color:#9fd8ff;font-size:9.5px}
 #joy{position:fixed;left:calc(env(safe-area-inset-left,0px) + 22px);bottom:calc(env(safe-area-inset-bottom,0px) + 24px);width:126px;height:126px;border-radius:50%;background:#0a142899;border:2px solid #2c456e;z-index:7}
 #joyk{position:absolute;width:52px;height:52px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#6fb4de,#2a6ea8);left:35px;top:35px;box-shadow:0 2px 10px #0008}
-.btn{position:fixed;border-radius:50%;background:radial-gradient(circle at 35% 30%,#20344f66,#0a142899);border:2px solid #3d5a8f;color:#eaf4ff;font-weight:800;display:flex;align-items:center;justify-content:center;flex-direction:column;z-index:7;letter-spacing:.5px;text-shadow:0 1px 2px #000;font-size:10px}
+.btn{position:fixed;border-radius:50%;background:radial-gradient(circle at 35% 30%,#20344f66,#0a142899);border:2px solid #3d5a8f;box-shadow:0 3px 14px #0007,inset 0 1px 6px #ffffff14;backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);color:#eaf4ff;font-weight:800;display:flex;align-items:center;justify-content:center;flex-direction:column;z-index:7;letter-spacing:.5px;text-shadow:0 1px 2px #000;font-size:10px}
 .btn span{font-size:19px;line-height:1}
 .btn:active{filter:brightness(1.5)}
 .btn.cd{opacity:.4}
@@ -100,27 +100,35 @@ var cv=document.getElementById('c');
 var renderer=new T.WebGLRenderer({canvas:cv,antialias:true,powerPreference:'high-performance'});
 renderer.setPixelRatio(Math.min(devicePixelRatio,1.6));
 renderer.shadowMap.enabled=true;renderer.shadowMap.type=T.PCFSoftShadowMap;
-renderer.outputEncoding=T.sRGBEncoding;
+renderer.outputEncoding=T.sRGBEncoding;renderer.toneMapping=T.ACESFilmicToneMapping;renderer.toneMappingExposure=1.08;
 var scene=new T.Scene();
-scene.background=new T.Color(0x87b8e8);
-scene.fog=new T.Fog(0x9cc4e8,120,560);
+scene.background=new T.Color(0x9cc4e8);
+scene.fog=new T.Fog(0xc2d7ea,140,640);
 var cam=new T.PerspectiveCamera(62,innerWidth/innerHeight,.1,1400);
+var skyDome=new T.Mesh(new T.SphereGeometry(900,20,14),new T.ShaderMaterial({side:T.BackSide,depthWrite:false,
+ vertexShader:'varying vec3 vP;void main(){vP=position;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}',
+ fragmentShader:'varying vec3 vP;void main(){float h=normalize(vP).y;vec3 top=vec3(.18,.42,.78);vec3 mid=vec3(.5,.7,.9);vec3 hor=vec3(.84,.89,.93);vec3 c=h>.2?mix(mid,top,smoothstep(.2,1.,h)):mix(hor,mid,smoothstep(-.05,.2,h));gl_FragColor=vec4(c,1.);}'}));
+scene.add(skyDome);
+var glowT=ctex(function(x,w,h){var g=x.createRadialGradient(w/2,h/2,0,w/2,h/2,w/2);g.addColorStop(0,'rgba(255,244,214,.9)');g.addColorStop(.35,'rgba(255,230,170,.35)');g.addColorStop(1,'rgba(255,230,170,0)');x.fillStyle=g;x.fillRect(0,0,w,h)},128,128);
+var sunGlow=new T.Sprite(new T.SpriteMaterial({map:glowT,blending:T.AdditiveBlending,depthWrite:false,transparent:true}));
+sunGlow.scale.set(150,150,1);sun.add(sunGlow);
 function resize(){var w=innerWidth,h=innerHeight;renderer.setSize(w,h,false);cam.aspect=w/h;cam.updateProjectionMatrix();}
 addEventListener('resize',function(){resize();document.getElementById('rot').style.display=(innerHeight>innerWidth)?'flex':'none';});
 resize();
-var hemi=new T.HemisphereLight(0xbfdcff,0x3a4a30,.85);scene.add(hemi);
-var sun=new T.DirectionalLight(0xfff2d8,1.25);sun.position.set(60,90,40);sun.castShadow=true;
+var hemi=new T.HemisphereLight(0xcfe3ff,0x3d4f33,.7);scene.add(hemi);
+var sun=new T.DirectionalLight(0xffe9c4,1.5);sun.position.set(60,90,40);sun.castShadow=true;
 sun.shadow.mapSize.set(2048,2048);sun.shadow.camera.left=-70;sun.shadow.camera.right=70;sun.shadow.camera.top=70;sun.shadow.camera.bottom=-70;sun.shadow.camera.far=300;sun.shadow.bias=-.0004;
+var fill=new T.DirectionalLight(0x8fb4ff,.32);fill.position.set(-50,45,-35);scene.add(fill);
 scene.add(sun);scene.add(sun.target);
 /* textures */
 function ctex(fn,w,h){var c=document.createElement('canvas');c.width=w||128;c.height=h||128;var x=c.getContext('2d');fn(x,c.width,c.height);var t=new T.CanvasTexture(c);t.wrapS=t.wrapT=T.RepeatWrapping;return t}
-var grassT=ctex(function(x,w,h){x.fillStyle='#4d7a3a';x.fillRect(0,0,w,h);for(var i=0;i<420;i++){x.fillStyle=['#436e33','#568a42','#3e642f','#5d9147'][i%4];x.fillRect(Math.random()*w,Math.random()*h,2+Math.random()*5,1+Math.random()*3)}},128,128);
+var grassT=ctex(function(x,w,h){x.fillStyle='#4a7a38';x.fillRect(0,0,w,h);for(var i=0;i<80;i++){x.fillStyle='rgba(96,76,44,'+(Math.random()*.13)+')';x.beginPath();x.arc(Math.random()*w,Math.random()*h,4+Math.random()*11,0,7);x.fill()}for(var i=0;i<90;i++){x.fillStyle='rgba(160,210,120,'+(Math.random()*.1)+')';x.beginPath();x.arc(Math.random()*w,Math.random()*h,3+Math.random()*8,0,7);x.fill()}for(var i=0;i<560;i++){x.fillStyle=['#3f6a2f','#548a40','#436e33','#5d9147','#6da052'][i%5];x.fillRect(Math.random()*w,Math.random()*h,1+Math.random()*4,1+Math.random()*2)}},128,128);
 grassT.repeat.set(90,90);
 var sandT=ctex(function(x,w,h){x.fillStyle='#d8c08a';x.fillRect(0,0,w,h);for(var i=0;i<300;i++){x.fillStyle=i%2?'#cbb37e':'#e2cc96';x.fillRect(Math.random()*w,Math.random()*h,3,2)}},64,64);
 sandT.repeat.set(80,80);
-var roadT=ctex(function(x,w,h){x.fillStyle='#3a3d46';x.fillRect(0,0,w,h);x.fillStyle='#2c2f36';x.fillRect(0,h*.45,w,h*.1);x.strokeStyle='#c8c8b0';x.setLineDash([8,10]);x.lineWidth=3;x.beginPath();x.moveTo(0,h*.5);x.lineTo(w,h*.5);x.stroke()},64,64);
+var roadT=ctex(function(x,w,h){x.fillStyle='#a9adb4';x.fillRect(0,0,w,h);x.fillStyle='#3a3d46';x.fillRect(0,h*.09,w,h*.82);x.fillStyle='#2c2f36';x.fillRect(0,h*.45,w,h*.1);x.strokeStyle='#d8d8c0';x.setLineDash([8,10]);x.lineWidth=3;x.beginPath();x.moveTo(0,h*.5);x.lineTo(w,h*.5);x.stroke();x.setLineDash([]);x.fillStyle='#c9cdd2';x.fillRect(0,h*.07,w,2);x.fillRect(0,h*.93,w,2)},64,64);
 roadT.repeat.set(1,14);
-var winT=ctex(function(x,w,h){x.fillStyle='#2b3242';x.fillRect(0,0,w,h);for(var r=0;r<10;r++)for(var col=0;col<6;col++){var lit=Math.random()<.45;x.fillStyle=lit?'rgba(255,214,120,.92)':'rgba(52,66,92,.95)';x.fillRect(6+col*20,8+r*12,12,7)}},128,128);
+var winT=ctex(function(x,w,h){x.fillStyle='#39445c';x.fillRect(0,0,w,h);for(var r=0;r<10;r++)for(var col=0;col<6;col++){var lit=Math.random()<.3;x.fillStyle=lit?'rgba(255,214,140,.95)':'rgba(72,92,124,.92)';x.fillRect(4+col*21,6+r*12,15,8)}x.fillStyle='rgba(24,30,46,.6)';x.fillRect(0,0,w,4);x.fillRect(0,h-4,w,4);},128,128);
 var marbleT=ctex(function(x,w,h){x.fillStyle='#cfc9b8';x.fillRect(0,0,w,h);for(var i=0;i<60;i++){x.strokeStyle='rgba(120,115,100,'+(Math.random()*.4)+')';x.beginPath();x.moveTo(Math.random()*w,0);x.bezierCurveTo(Math.random()*w,h*.3,Math.random()*w,h*.7,Math.random()*w,h);x.stroke()}},128,128);
 var fallsT=ctex(function(x,w,h){x.fillStyle='#7fc4e8';x.fillRect(0,0,w,h);for(var i=0;i<50;i++){x.fillStyle='rgba(255,255,255,'+(.2+Math.random()*.5)+')';x.fillRect(Math.random()*w,Math.random()*h,2,6+Math.random()*10)}},64,128);
 fallsT.repeat.set(2,3);
@@ -128,7 +136,7 @@ fallsT.repeat.set(2,3);
 var matGrass=new T.MeshStandardMaterial({map:grassT,roughness:1});
 var matSand=new T.MeshStandardMaterial({map:sandT,roughness:1});
 var matRoad=new T.MeshStandardMaterial({map:roadT,roughness:.9});
-var matBuild=new T.MeshStandardMaterial({map:winT,roughness:.7,metalness:.1});
+var matBuild=new T.MeshStandardMaterial({map:winT,roughness:.55,metalness:.25});
 var matMarble=new T.MeshStandardMaterial({map:marbleT,roughness:.6});
 /* world */
 var WORLD={size:760,waterY:-.3};
@@ -161,9 +169,12 @@ bMesh.castShadow=true;bMesh.receiveShadow=true;scene.add(bMesh);
 
 /* ocean + river + waterfall */
 var ocnGeo=new T.PlaneGeometry(2400,2400,48,48);
-var ocn=new T.Mesh(ocnGeo,new T.MeshStandardMaterial({color:0x1a6fa8,transparent:true,opacity:.86,roughness:.25,metalness:.35}));
+var ocn=new T.Mesh(ocnGeo,new T.MeshStandardMaterial({color:0x14639e,transparent:true,opacity:.9,roughness:.16,metalness:.55}));
 ocn.rotation.x=-Math.PI/2;ocn.position.y=WORLD.waterY;ocn.receiveShadow=true;scene.add(ocn);
-var ocF=0;function animOcean(t){ocF++;var p=ocnGeo.attributes.position;for(var i=0;i<p.count;i++){var x=p.getX(i),y=p.getY(i);p.setZ(i,Math.sin(x*.045+t*1.3)*.5+Math.cos(y*.05+t*1.7)*.4);}p.needsUpdate=true;if(ocF%3===0)ocnGeo.computeVertexNormals();}
+var foam=new T.Mesh(new T.RingGeometry(WORLD.size/2*Math.SQRT2*.86-2,WORLD.size/2*Math.SQRT2*.86+4,72),new T.MeshBasicMaterial({color:0xeaf6ff,transparent:true,opacity:.45}));
+foam.rotation.x=-Math.PI/2;foam.position.y=WORLD.waterY+.05;scene.add(foam);
+var ocF=0;function animOcean(t){ocF++;if(foam)foam.material.opacity=.32+Math.sin(t*1.6)*.14;var p=ocnGeo.attributes.position;for(var i=0;i<p.count;i++){var x=p.getX(i),y=p.getY(i);p.setZ(i,Math.sin(x*.045+t*1.3)*.5+Math.cos(y*.05+t*1.7)*.4);}p.needsUpdate=true;if(ocF%3===0)ocnGeo.computeVertexNormals();}
+var FF=[];for(var f0=0;f0<34;f0++)FF.push({x:-340+Math.random()*260,z:-170+Math.random()*400,y:1+Math.random()*4,p:Math.random()*7});
 var rivPath=[{x:-40,z:-330},{x:-20,z:-220},{x:60,z:-120},{x:80,z:-10},{x:60,z:120},{x:140,z:220},{x:200,z:340}];
 var rivPts=[];
 for(var i=0;i<rivPath.length-1;i++){for(var s=0;s<10;s++){var a=rivPath[i],b=rivPath[i+1];var f=s/10;rivPts.push({x:a.x+(b.x-a.x)*f,z:a.z+(b.z-a.z)*f})}}
@@ -175,8 +186,10 @@ pond.rotation.x=-Math.PI/2;pond.position.set(60,120,.04);scene.add(pond);rivPts.
 var mtGeo=new T.ConeGeometry(120,110,7);
 var mount=new T.Mesh(mtGeo,new T.MeshStandardMaterial({color:0x5e6b58,roughness:1,flatShading:true}));
 mount.position.set(-140,-4,-460);mount.castShadow=true;scene.add(mount);
+var cap1=new T.Mesh(new T.ConeGeometry(30,28,7),new T.MeshStandardMaterial({color:0xeef4f8,roughness:.9,flatShading:true}));cap1.position.set(-140,38,-460);scene.add(cap1);
 var mount2=new T.Mesh(new T.ConeGeometry(80,70,6),new T.MeshStandardMaterial({color:0x54614f,roughness:1,flatShading:true}));
 mount2.position.set(-260,0,-380);scene.add(mount2);
+var cap2=new T.Mesh(new T.ConeGeometry(18,16,6),new T.MeshStandardMaterial({color:0xeef4f8,roughness:.9,flatShading:true}));cap2.position.set(-260,27,-380);scene.add(cap2);
 var falls=new T.Mesh(new T.PlaneGeometry(26,46),new T.MeshBasicMaterial({map:fallsT,transparent:true,opacity:.9}));
 falls.position.set(-40,20,-342);scene.add(falls);
 /* temple ruins (SW) */
@@ -187,14 +200,23 @@ for(var c2=0;c2<6;c2++){var col2=new T.Mesh(new T.CylinderGeometry(1.8,2.1,13+Ma
 var arch=new T.Mesh(new T.BoxGeometry(60,3,10),matMarble);arch.position.set(-240,22,182);arch.castShadow=true;temple.add(arch);
 var statue=new T.Mesh(new T.CylinderGeometry(1.2,2,10,8),new T.MeshStandardMaterial({color:0xc9a13b,metalness:.8,roughness:.35}));
 statue.position.set(-240,9,200);statue.castShadow=true;temple.add(statue);addCol(-240,200,2,2);
+/* firefly sparks */
+var ffGeo=new T.BufferGeometry();var ffN=FF.length;var ffPos=new Float32Array(ffN*3);
+for(var f1=0;f1<ffN;f1++){ffPos[f1*3]=FF[f1].x;ffPos[f1*3+1]=FF[f1].y;ffPos[f1*3+2]=FF[f1].z}
+ffGeo.setAttribute('position',new T.BufferAttribute(ffPos,3));
+var ffMat=new T.PointsMaterial({color:0xd8f28a,size:.34,transparent:true,opacity:.85,blending:T.AdditiveBlending,depthWrite:false});
+var ffPts=new T.Points(ffGeo,ffMat);ffPts.frustumCulled=false;scene.add(ffPts);
+var ffDt=null;function ffTick(t){for(var i=0;i<FF.length;i++){var f=FF[i];ffPos[i*3]=f.x+Math.sin(t*.7+f.p)*2;ffPos[i*3+1]=f.y+Math.sin(t*1.3+f.p*2)*.8;ffPos[i*3+2]=f.z+Math.cos(t*.5+f.p)*2}ffGeo.attributes.position.needsUpdate=true}
 /* trees + rocks */
 var trunkG=new T.CylinderGeometry(.5,.7,5,6),leafG=new T.ConeGeometry(3.2,7,7);
-var trunkM=new T.MeshStandardMaterial({color:0x6b4a2e,roughness:1}),leafM=new T.MeshStandardMaterial({color:0x2e5a33,roughness:1,flatShading:true});
+var trunkM=new T.MeshStandardMaterial({color:0x6b4a2e,roughness:1});
+var leafMs=[0x2e5a33,0x3a6b3c,0x27502c,0x4c7a3a].map(function(c){return new T.MeshStandardMaterial({color:c,roughness:1,flatShading:true})});
 var TREES=[];
 for(var t=0;t<90;t++){var tx=-340+Math.random()*260,tz=-180+Math.random()*420;
  if(Math.abs(tx+240)<70&&Math.abs(tz-200)<60)continue;
  var tr=new T.Group();var tk=new T.Mesh(trunkG,trunkM);tk.position.y=2.5;tk.castShadow=true;tr.add(tk);
- var lf=new T.Mesh(leafG,leafM);lf.position.y=7.5;lf.castShadow=true;tr.add(lf);
+ var lm=leafMs[Math.floor(Math.random()*leafMs.length)];var lf=new T.Mesh(leafG,lm);lf.position.y=7.5;lf.castShadow=true;tr.add(lf);
+ var lf2=new T.Mesh(new T.ConeGeometry(2.1,4.6,7),lm);lf2.position.y=11;lf2.castShadow=true;tr.add(lf2);
  tr.position.set(tx,0,tz);var s=.8+Math.random()*.9;tr.scale.set(s,s,s);scene.add(tr);TREES.push({x:tx,z:tz});addCol(tx,tz,1,1);}
 for(var t2=0;t2<26;t2++){var rx=-320+Math.random()*640,rz=-320+Math.random()*640;if(Math.abs(rx-180)<200&&Math.abs(rz+170)<200)continue;
  var rk=new T.Mesh(new T.DodecahedronGeometry(1.4+Math.random()*2.4,0),new T.MeshStandardMaterial({color:0x8a8f96,roughness:1,flatShading:true}));
@@ -204,7 +226,7 @@ for(var tn=0;tn<5;tn++){var px=-180+tn*14,pz=150+((tn%2)*14);
  var tent=new T.Mesh(new T.ConeGeometry(4,5,4),new T.MeshStandardMaterial({color:0xc46a2a,roughness:.9,flatShading:true}));
  tent.position.set(px,2.5,pz);tent.castShadow=true;scene.add(tent);addCol(px,pz,3,3);}
 /* clouds */
-for(var cl=0;cl<10;cl++){var cm=new T.Mesh(new T.SphereGeometry(8+Math.random()*10,7,5),new T.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:.85}));
+for(var cl=0;cl<14;cl++){var cm=new T.Mesh(new T.SphereGeometry(8+Math.random()*12,7,5),new T.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:.72}));
  cm.position.set(-500+Math.random()*1000,80+Math.random()*40,-500+Math.random()*1000);cm.scale.y=.4;scene.add(cm)}
 /* collision resolve (2D circle vs AABB) */
 function collide2(o,r){
@@ -230,7 +252,7 @@ var matShoe=new T.MeshStandardMaterial({color:0x33363c,roughness:.9});
 var matHair=new T.MeshStandardMaterial({color:0x22201e,roughness:.9});
 var matEyeW=new T.MeshStandardMaterial({color:0xffffff,roughness:.4});
 var matEyeB=new T.MeshStandardMaterial({color:0x1a2430,roughness:.4});
-var matBlade=new T.MeshStandardMaterial({color:0xd8b24a,metalness:.85,roughness:.25,emissive:0x3a2c08});
+var matBlade=new T.MeshStandardMaterial({color:0xe2bd55,metalness:.9,roughness:.2,emissive:0x5c4712});
 var matWater=new T.MeshStandardMaterial({color:0x49b8f0,transparent:true,opacity:.75,roughness:.15,metalness:.4,emissive:0x0a3a5a});
 function limb(r1,r2,len,mat){var m=new T.Mesh(new T.CylinderGeometry(r1,r2,len,7),mat);m.position.y=-len/2;m.castShadow=true;return m}
 function buildHumanoid(opt){
@@ -850,7 +872,7 @@ function loop(){
    if(G3.kronT<=0){G3.kronT=120+Math.random()*60;if(Math.random()<.6){mkE3('kronos',-240,150);banner3('KRONOS STIRS AT THE TEMPLE',2600);sfx('kron')}}}
  }
  updFX(dt);
- animOcean(clock.elapsedTime);
+ animOcean(clock.elapsedTime);if(ffTick)ffTick(clock.elapsedTime);
  fallsT.offset.y-=dt*.6;
  if(G3.started)updCam(Math.max(.001,dt));
  else{cam.position.set(P.x+8,6,P.z+8);cam.lookAt(P.x,1.4,P.z)}
